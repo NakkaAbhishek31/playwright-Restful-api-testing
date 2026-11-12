@@ -4,8 +4,7 @@
 // with Allure 3 support.
 // Create username/password credentials named restful-booker-api for the API.
 pipeline {
-    agent { label 'windows' }
-
+      agent any
     options {
         disableConcurrentBuilds()
         skipDefaultCheckout(true)
