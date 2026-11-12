@@ -6,7 +6,9 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-
+/allure-results/
+/allure-report/
+/allure-history/
 # Local environment settings and credentials
 .env
 .env.*
