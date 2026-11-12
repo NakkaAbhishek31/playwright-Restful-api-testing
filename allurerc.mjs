@@ -4,10 +4,10 @@ export default {
   historyPath: './allure-history/history.jsonl',
   appendHistory: true,
   plugins: {
-    awesome: {
+    classic: {
       options: {
         reportName: 'Restful Booker API tests',
-        singleFile: true,
+        singleFile: false,
       },
     },
   },

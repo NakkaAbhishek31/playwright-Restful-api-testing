@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "allure:generate": "allure generate allure-results --config allurerc.mjs --clean",
+    "allure:open": "allure open allure-report"
+  },
   "keywords": [],
   "type": "commonjs",
   "devDependencies": {
