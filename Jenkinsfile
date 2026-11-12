@@ -1,7 +1,6 @@
-// Windows agent prerequisites: Git, Node.js 22+, npm, and Allure CLI 3 on PATH.
-// Install the CLI on the agent with: npm install -g allure@3
-// Jenkins plugins: Pipeline, Git, Credentials Binding, Copy Artifact, and Allure
-// with Allure 3 support.
+// Windows agent prerequisites: Git, Node.js 22+, and npm.
+// Allure 3 is installed locally by npm ci; reports are archived as build artifacts.
+// Jenkins plugins: Pipeline, Git, Credentials Binding, and Copy Artifact.
 // Create username/password credentials named restful-booker-api for the API.
 pipeline {
       agent any
@@ -130,11 +129,11 @@ if errorlevel 1 exit /b 1
 '''
                 powershell '''
 $ErrorActionPreference = 'Stop'
-$version = & allure --version
+$version = & node 'node_modules/allure/cli.js' --version
 if ($LASTEXITCODE -ne 0) { throw 'Unable to run Allure CLI.' }
 Write-Output "Allure version: $version"
 if (($version -join ' ').Trim() -notmatch '^3[.]') {
-    throw 'Install Allure CLI 3 on this agent and ensure it is first on PATH.'
+    throw 'Expected project-local Allure CLI 3. Check package-lock.json and npm ci.'
 }
 '''
             }
@@ -177,15 +176,11 @@ exit $LASTEXITCODE
             script {
                 try {
                     if (env.TESTS_STARTED == 'true') {
-                        // Allure 3 reads and appends the restored JSONL history.
-                        // ALWAYS publishes results even when Playwright fails.
-                        allure([
-                            allureVersion: '3',
-                            configPath: 'allurerc.mjs',
-                            includeProperties: false,
-                            reportBuildPolicy: 'ALWAYS',
-                            results: [[path: 'allure-results']]
-                        ])
+                        // Use the local CLI through cmd, avoiding Java's Windows PATH lookup.
+                        // allurerc.mjs preserves the restored JSONL history.
+                        catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
+                            bat 'call node node_modules/allure/cli.js generate allure-results --config allurerc.mjs --clean'
+                        }
                     }
                 } finally {
                     if (env.TESTS_STARTED == 'true') {
