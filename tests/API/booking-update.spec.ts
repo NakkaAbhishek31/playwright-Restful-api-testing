@@ -1,8 +1,10 @@
 
 import { test, expect } from '@playwright/test';
 import { endpoints } from '../../config/endpoints';
-import { bookingData,updatedBookingData,partialBookingData  } from '../../test-data/booking.data';
+import { createBookingData, createPartialBookingData } from '../../test-data/booking.data';
 test("Retrieving a created booking returns matching details",async({request})=>{
+  const bookingData = createBookingData();
+  const updatedBookingData = { ...createBookingData(), additionalneeds: 'Dinner' };
   const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
   expect(bookingresponse.status()).toBe(200);
   const createdBooking=await bookingresponse.json();
@@ -49,6 +51,8 @@ const updateResponse = await request.put(
 
 });
 test("Partial update changes selected fields and preserves other details",async({request})=>{
+  const bookingData = createBookingData();
+  const partialBookingData = createPartialBookingData();
   const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
   expect(bookingresponse.status()).toBe(200);
   const createdBooking=await bookingresponse.json();

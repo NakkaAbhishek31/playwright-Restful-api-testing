@@ -1,8 +1,9 @@
 import{test,request, expect} from "@playwright/test"
 import { endpoints } from "../../config/endpoints"
-import { bookingData } from '../../test-data/booking.data';
+import { createBookingData } from '../../test-data/booking.data';
 
 test("Creating a booking returns its ID and submitted detail",async({request})=>{
+  const bookingData = createBookingData();
 
    const response = await request.post(endpoints.bookings,{data:bookingData});
    expect(response.status()).toBe(200);

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { endpoints } from '../../config/endpoints';
-import { bookingData } from '../../test-data/booking.data';
+import { createBookingData } from '../../test-data/booking.data';
 
 test("Listing bookings returns booking IDs",async({request})=>{
 
@@ -20,6 +20,7 @@ test("Listing bookings returns booking IDs",async({request})=>{
 
 
 test("Retrieving a created booking returns matching details",async({request})=>{
+  const bookingData = createBookingData();
  const createResponse =await  request.post(endpoints.bookings,{data:bookingData});
  expect(createResponse.status()).toBe(200);
  const createdBooking = await createResponse.json();

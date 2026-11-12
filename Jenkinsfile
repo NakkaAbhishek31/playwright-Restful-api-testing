@@ -1,13 +1,14 @@
-// Windows agent prerequisites: Git, Node.js 22+, and npm.
+// Windows agent prerequisites: Git, Node.js 22+, npm, and Java 17+.
 // npm ci installs the local CLI. Jenkins publishes through its managed Allure tool.
-// Jenkins plugins: Pipeline, Git, Credentials Binding, Copy Artifact, and Allure 3.x.
-// Configure Manage Jenkins > Tools > Allure Commandline: name Allure, Recommended Allure 3.
+// Jenkins plugins: Pipeline, Git, Credentials Binding, and Allure.
+// Configure Manage Jenkins > Tools > Allure Commandline: name Allure, version 2.43.0.
 // Create username/password credentials named restful-booker-api for the API.
 pipeline {
     agent any
 
     tools {
         nodejs 'nodejs'
+        allure 'Allure'
     }
     options {
         timestamps()
@@ -23,22 +24,11 @@ pipeline {
             choices: ['1', '2', '3', '4', '5', '6', '7', '8'],
             description: 'Maximum parallel Playwright workers.'
         )
-        choice(
-            name: 'RETRIES',
-            choices: ['2', '0', '1', '3'],
-            description: 'Retries for each failed test.'
-        )
         string(
             name: 'TEST_NAME',
             defaultValue: '',
             trim: true,
             description: 'Optional test title or regular expression passed to Playwright --grep.'
-        )
-        string(
-            name: 'ALLURE_TOOL',
-            defaultValue: 'Allure',
-            trim: true,
-            description: 'Managed Allure Commandline installation name from Manage Jenkins > Tools.'
         )
         choice(
             name: 'TEST_FILE',
@@ -115,12 +105,9 @@ pipeline {
                     if (!((params.WORKERS ?: '1') in ['1', '2', '3', '4', '5', '6', '7', '8'])) {
                         error('WORKERS must be between 1 and 8.')
                     }
-                    if (!((params.RETRIES ?: '2') in ['0', '1', '2', '3'])) {
-                        error('RETRIES must be between 0 and 3.')
-                    }
                     env.TEST_NAME_FILTER = params.TEST_NAME?.trim() ?: ''
                     env.PLAYWRIGHT_WORKER_COUNT = params.WORKERS ?: '1'
-                    env.PLAYWRIGHT_RETRY_COUNT = params.RETRIES ?: '2'
+                    env.PLAYWRIGHT_RETRY_COUNT = '2'
                     env.BASE_URL = params.BASE_URL.trim()
                     env.SELECTED_TEST_FILES = selectedFiles.join(',')
                     echo "Selected tests: ${selectedFiles ? selectedFiles.join(', ') : 'ALL'}"
@@ -132,25 +119,12 @@ pipeline {
         stage('Prepare current results') {
             steps {
                 // Remove stale output from this workspace before starting a new run.
-                // History is restored separately from the previous build's artifacts.
+                // The Jenkins Allure publisher manages report history.
                 dir('allure-results') { deleteDir() }
                 dir('allure-report') { deleteDir() }
                 dir('playwright-report') { deleteDir() }
                 dir('test-results') { deleteDir() }
                 dir('blob-report') { deleteDir() }
-            }
-        }
-
-        stage('Restore Allure history') {
-            steps {
-                dir('allure-history') { deleteDir() }
-                // Optional allows the first build, which has no earlier history.
-                copyArtifacts(
-                    projectName: env.JOB_NAME,
-                    selector: permalink('lastCompletedBuild'),
-                    filter: 'allure-history/history.jsonl',
-                    optional: true
-                )
             }
         }
 
@@ -167,11 +141,11 @@ if errorlevel 1 exit /b 1
 '''
                 powershell '''
 $ErrorActionPreference = 'Stop'
-$version = & node 'node_modules/allure/cli.js' --version
+$version = & node 'node_modules/allure-commandline/bin/allure' --version
 if ($LASTEXITCODE -ne 0) { throw 'Unable to run Allure CLI.' }
 Write-Output "Allure version: $version"
-if (($version -join ' ').Trim() -notmatch '^3[.]') {
-    throw 'Expected project-local Allure CLI 3. Check package-lock.json and npm ci.'
+if (-not ($version -match '^2[.]')) {
+    throw 'Expected project-local Allure CLI 2. Check package-lock.json and npm ci.'
 }
 '''
             }
@@ -218,8 +192,8 @@ exit $LASTEXITCODE
                         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                             // Jenkins Tools must contain a managed installation named Allure.
                             allure([
-                                commandline: params.ALLURE_TOOL?.trim() ?: 'Allure',
-                                configPath: 'allurerc.mjs',
+                                commandline: 'Allure',
+                                jdk: '',
                                 includeProperties: false,
                                 reportBuildPolicy: 'ALWAYS',
                                 report: 'allure-report',
@@ -229,7 +203,7 @@ exit $LASTEXITCODE
                     }
                 } finally {
                     archiveArtifacts(
-                        artifacts: 'allure-results/**,allure-report/**,playwright-report/**,test-results/**,allure-history/history.jsonl',
+                        artifacts: 'allure-results/**,allure-report/**,playwright-report/**,test-results/**',
                         allowEmptyArchive: true
                     )
                 }

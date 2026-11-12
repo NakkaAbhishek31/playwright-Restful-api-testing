@@ -1,32 +1,28 @@
-export const bookingData = {
-  firstname: 'John',
-  lastname: 'Smith',
-  totalprice: 150,
-  depositpaid: true,
-  bookingdates: {
-    checkin: '2027-01-10',
-    checkout: '2027-01-15',
-  },
-  additionalneeds: 'Breakfast',
-};
+import { randomInt, randomUUID } from 'node:crypto';
 
+export function createPartialBookingData() {
+  const uniqueId = randomUUID();
 
-export const updatedBookingData = {
-  firstname: 'James',
-  lastname: 'Brown',
-  totalprice: 250,
-  depositpaid: false,
-  bookingdates: {
-    checkin: '2027-02-10',
-    checkout: '2027-02-18',
-  },
-  additionalneeds: 'Dinner',
-};
+  return {
+    firstname: `Guest-${uniqueId}`,
+    lastname: `Test-${uniqueId}`,
+  };
+}
 
+export function createBookingData() {
+  const checkin = new Date();
+  checkin.setUTCDate(checkin.getUTCDate() + randomInt(1, 31));
+  const checkout = new Date(checkin);
+  checkout.setUTCDate(checkout.getUTCDate() + randomInt(1, 15));
 
-export const partialBookingData = {
-  firstname: 'Alice',
-  lastname: 'Wilson',
-};
-
-
+  return {
+    ...createPartialBookingData(),
+    totalprice: randomInt(100, 1001),
+    depositpaid: randomInt(0, 2) === 1,
+    bookingdates: {
+      checkin: checkin.toISOString().slice(0, 10),
+      checkout: checkout.toISOString().slice(0, 10),
+    },
+    additionalneeds: 'Breakfast',
+  };
+}
