@@ -37,7 +37,7 @@ export default defineConfig({
       {
         resultsDir: "allure-results",
         detail: true,
-        suiteTitle: false,
+        suiteTitle: true,
       },
     ],
   ],
