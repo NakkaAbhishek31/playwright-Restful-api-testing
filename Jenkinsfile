@@ -1,6 +1,7 @@
 // Windows agent prerequisites: Git, Node.js 22+, and npm.
-// Allure 3 is installed locally by npm ci; reports are archived as build artifacts.
-// Jenkins plugins: Pipeline, Git, Credentials Binding, and Copy Artifact.
+// npm ci installs the local CLI. Jenkins publishes through its managed Allure tool.
+// Jenkins plugins: Pipeline, Git, Credentials Binding, Copy Artifact, and Allure 3.x.
+// Configure Manage Jenkins > Tools > Allure Commandline: name Allure, Recommended Allure 3.
 // Create username/password credentials named restful-booker-api for the API.
 pipeline {
       agent any
@@ -40,7 +41,6 @@ pipeline {
 
     environment {
         CI = 'true'
-        TESTS_STARTED = 'false'
     }
 
     stages {
@@ -147,7 +147,6 @@ if (($version -join ' ').Trim() -notmatch '^3[.]') {
                     passwordVariable: 'API_PASSWORD'
                 )]) {
                     script {
-                        env.TESTS_STARTED = 'true'
                         def testExitCode = powershell(returnStatus: true, script: '''
 $ErrorActionPreference = 'Stop'
 $testArguments = @('node_modules/@playwright/test/cli.js', 'test', '--workers=4', '--retries=2')
@@ -175,15 +174,22 @@ exit $LASTEXITCODE
         always {
             script {
                 try {
-                    if (env.TESTS_STARTED == 'true') {
-                        // Use the local CLI through cmd, avoiding Java's Windows PATH lookup.
-                        // allurerc.mjs preserves the restored JSONL history.
+                    if (fileExists('allure-results')) {
+                        echo 'Publishing Allure results in Jenkins, including failed tests'
                         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
-                            bat 'call node node_modules/allure/cli.js generate allure-results --config allurerc.mjs --clean'
+                            // Jenkins Tools must contain a managed installation named Allure.
+                            allure([
+                                commandline: 'Allure',
+                                configPath: 'allurerc.mjs',
+                                includeProperties: false,
+                                reportBuildPolicy: 'ALWAYS',
+                                report: 'allure-report',
+                                results: [[path: 'allure-results']]
+                            ])
                         }
                     }
                 } finally {
-                    if (env.TESTS_STARTED == 'true') {
+                    if (fileExists('allure-results')) {
                         archiveArtifacts(
                             artifacts: 'allure-results/**,allure-report/**,playwright-report/**,test-results/**,allure-history/history.jsonl',
                             allowEmptyArchive: true
