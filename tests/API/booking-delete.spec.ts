@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { endpoints } from '../../config/endpoints';
 import { createBookingData } from '../../test-data/booking.data';
-test("Retrieving a created booking returns matching details",async({request})=>{
+test("deleting a created booking",async({request})=>{
   const bookingData = createBookingData();
   const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
   expect(bookingresponse.status()).toBe(200);
@@ -39,5 +39,58 @@ const authresponse = await request.post(endpoints.auth, {
 
 
 
+
+});
+
+
+test("Deleting a booking without authentication returns 403 and preserves the booking",async({request})=>{
+  const bookingData = createBookingData();
+  const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
+  expect(bookingresponse.status()).toBe(200);
+  const createdBooking=await bookingresponse.json();
+  console.log(createdBooking);
+  expect(Number.isInteger(createdBooking.bookingid)).toBe(true);
+  expect(createdBooking.bookingid).toBeGreaterThan(0);
+  expect(createdBooking.booking).toEqual(bookingData);
+   const bookingId = createdBooking.bookingid;
+  
+  //delete
+  const deleteresponse= await request.delete(endpoints.bookingById(bookingId));
+
+    expect(deleteresponse.status()).toBe(403);
+    
+    //get method 
+
+ const getresponse = await  request.get(endpoints.bookingById(bookingId));
+ expect(getresponse.status()).toBe(200);
+ const getresponseData = await getresponse.json();
+ expect(getresponseData).toEqual(bookingData);
+});
+
+
+
+test("Deleting a booking with an invalid token returns 403 and preserves the booking",async({request})=>{
+  const bookingData = createBookingData();
+  const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
+  expect(bookingresponse.status()).toBe(200);
+  const createdBooking=await bookingresponse.json();
+  console.log(createdBooking);
+  expect(Number.isInteger(createdBooking.bookingid)).toBe(true);
+  expect(createdBooking.bookingid).toBeGreaterThan(0);
+  expect(createdBooking.booking).toEqual(bookingData);
+   const bookingId = createdBooking.bookingid;  
+  //delete
+  const deleteresponse= await request.delete(endpoints.bookingById(bookingId),{ headers: {
+      Cookie: `token=invalid-token`,
+    },});
+
+    expect(deleteresponse.status()).toBe(403);
+    
+    //get method 
+
+ const getresponse = await  request.get(endpoints.bookingById(bookingId));
+
+ const getResponseData=await getresponse.json();
+ expect(getResponseData).toEqual(bookingData);
 
 });

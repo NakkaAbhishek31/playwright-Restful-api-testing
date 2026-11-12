@@ -33,3 +33,50 @@ test("Retrieving a created booking returns matching details",async({request})=>{
  console.log(booking);
  expect(booking).toEqual(bookingData);
 });
+
+
+test("Searching bookings by guest name returns the created booking",async({request})=>
+{
+  const bookingData = createBookingData();
+  const createResponse =await request.post(endpoints.bookings,{data:bookingData});
+   expect(createResponse.status()).toBe(200);
+  const  createResponseData= await createResponse.json();
+  const bookingId = createResponseData.bookingid;
+ expect(Number.isInteger(bookingId)).toBe(true);
+  const getResponse =await request.get(endpoints.bookings,{
+    params:{
+       firstname:bookingData.firstname,
+       lastname:bookingData.lastname
+    }
+  });
+
+ expect(getResponse.status()).toBe(200);
+ const getResponseData=await getResponse.json();
+ console.log('getresponse:',getResponseData)
+ expect(Array.isArray(getResponseData)).toBe(true);
+expect(getResponseData).toContainEqual({ bookingid: bookingId });
+
+
+
+
+
+})
+
+
+test("Searching bookings with an unknown guest name returns an empty list",async({request})=>
+{
+  const bookingData = createBookingData();
+  const getResponse =await request.get(endpoints.bookings,{
+    params:{
+       firstname:bookingData.firstname,
+       lastname:bookingData.lastname
+    }
+  });
+
+ expect(getResponse.status()).toBe(200);
+ const getResponseData=await getResponse.json();
+ console.log('getresponse:',getResponseData)
+ expect(getResponseData).toEqual([]);
+
+
+})
