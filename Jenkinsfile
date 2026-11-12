@@ -134,7 +134,7 @@ $ErrorActionPreference = 'Stop'
 $version = & allure --version
 if ($LASTEXITCODE -ne 0) { throw 'Unable to run Allure CLI.' }
 Write-Output "Allure version: $version"
-if (($version -join ' ').Trim() -notmatch '^3\.') {
+if (($version -join ' ').Trim() -notmatch '^3[.]') {
     throw 'Install Allure CLI 3 on this agent and ensure it is first on PATH.'
 }
 '''
