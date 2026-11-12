@@ -1,0 +1,12 @@
+{
+  bookingid: 3781,
+  booking: {
+    firstname: 'John',
+    lastname: 'Smith',
+    totalprice: 150,
+    depositpaid: true,
+    bookingdates: { checkin: '2027-01-10', checkout: '2027-01-15' },
+    additionalneeds: 'Breakfast'
+  }
+}
+b4c6038e6620b14

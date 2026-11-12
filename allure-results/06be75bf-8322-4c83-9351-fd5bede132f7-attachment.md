@@ -1,0 +1,59 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: auth.spec.ts >> Invalid credentials return an authentication failure
+- Location: tests\API\auth.spec.ts:24:1
+
+# Error details
+
+```
+Error: toHaveText can be only used with Locator object, was called with Bad credentials
+```
+
+# Test source
+
+```ts
+  1  | import{test,expect} from "@playwright/test"
+  2  | 
+  3  |  import { endpoints } from "../../config/endpoints";
+  4  | 
+  5  | 
+  6  | test('Valid credentials return an authentication token',async({request,})=>
+  7  | {
+  8  | const response = await request.post(endpoints.auth,{
+  9  |     data:{
+  10 |         "username" : process.env.username,
+  11 |         "password" : process.env.password
+  12 |     }
+  13 | })
+  14 | 
+  15 | expect(response.status()).toBe(200);
+  16 | 
+  17 | const body =await response.json();
+  18 | console.log(body);
+  19 | expect(body.token).not.toBeEmpty
+  20 | 
+  21 | });
+  22 |  
+  23 | 
+  24 | test('Invalid credentials return an authentication failure',async({request,})=>
+  25 | {
+  26 | const response = await request.post(endpoints.auth,{
+  27 |     data:{
+  28 |          username: 'invalid-user',
+  29 |          password: 'invalid-password',
+  30 |     }
+  31 | })
+  32 | const body =await response.json();
+  33 | console.log(body);
+> 34 | expect(body.reason).toHaveText('Bad credentials');
+     |                     ^ Error: toHaveText can be only used with Locator object, was called with Bad credentials
+  35 | expect(body.token).toBeFalsy();
+  36 | });
+  37 | 
+```

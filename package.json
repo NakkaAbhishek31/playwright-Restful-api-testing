@@ -1,0 +1,14 @@
+{
+  "name": "api-testing-automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "keywords": [],
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.65.0",
+    "@types/node": "^26.6.6",
+    "allure-playwright": "^3.14.0"
+  }
+}
