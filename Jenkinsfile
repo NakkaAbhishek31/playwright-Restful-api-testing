@@ -4,14 +4,42 @@
 // Configure Manage Jenkins > Tools > Allure Commandline: name Allure, Recommended Allure 3.
 // Create username/password credentials named restful-booker-api for the API.
 pipeline {
-      agent any
+    agent any
+
+    tools {
+        nodejs 'nodejs'
+    }
     options {
+        timestamps()
         disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
         skipDefaultCheckout(true)
         timeout(time: 30, unit: 'MINUTES')
     }
 
     parameters {
+        choice(
+            name: 'WORKERS',
+            choices: ['1', '2', '3', '4', '5', '6', '7', '8'],
+            description: 'Maximum parallel Playwright workers.'
+        )
+        choice(
+            name: 'RETRIES',
+            choices: ['2', '0', '1', '3'],
+            description: 'Retries for each failed test.'
+        )
+        string(
+            name: 'TEST_NAME',
+            defaultValue: '',
+            trim: true,
+            description: 'Optional test title or regular expression passed to Playwright --grep.'
+        )
+        string(
+            name: 'ALLURE_TOOL',
+            defaultValue: 'Allure',
+            trim: true,
+            description: 'Managed Allure Commandline installation name from Manage Jenkins > Tools.'
+        )
         choice(
             name: 'TEST_FILE',
             choices: [
@@ -44,8 +72,9 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clean and Checkout') {
             steps {
+                deleteDir()
                 checkout scm
             }
         }
@@ -66,7 +95,7 @@ pipeline {
 
                     if (customFiles) {
                         selectedFiles = customFiles.split(',').collect { it.trim() }.unique()
-                    } else if (params.TEST_FILE != 'ALL') {
+                    } else if (params.TEST_FILE && params.TEST_FILE != 'ALL') {
                         selectedFiles = [params.TEST_FILE]
                     }
 
@@ -83,10 +112,19 @@ pipeline {
                         error('BASE_URL must be an HTTP or HTTPS URL.')
                     }
 
+                    if (!((params.WORKERS ?: '1') in ['1', '2', '3', '4', '5', '6', '7', '8'])) {
+                        error('WORKERS must be between 1 and 8.')
+                    }
+                    if (!((params.RETRIES ?: '2') in ['0', '1', '2', '3'])) {
+                        error('RETRIES must be between 0 and 3.')
+                    }
+                    env.TEST_NAME_FILTER = params.TEST_NAME?.trim() ?: ''
+                    env.PLAYWRIGHT_WORKER_COUNT = params.WORKERS ?: '1'
+                    env.PLAYWRIGHT_RETRY_COUNT = params.RETRIES ?: '2'
                     env.BASE_URL = params.BASE_URL.trim()
                     env.SELECTED_TEST_FILES = selectedFiles.join(',')
                     echo "Selected tests: ${selectedFiles ? selectedFiles.join(', ') : 'ALL'}"
-                    echo 'Playwright settings: 4 workers, 2 retries per failed test.'
+                    echo "Playwright settings: ${env.PLAYWRIGHT_WORKER_COUNT} workers, ${env.PLAYWRIGHT_RETRY_COUNT} retries per failed test."
                 }
             }
         }
@@ -149,7 +187,8 @@ if (($version -join ' ').Trim() -notmatch '^3[.]') {
                     script {
                         def testExitCode = powershell(returnStatus: true, script: '''
 $ErrorActionPreference = 'Stop'
-$testArguments = @('node_modules/@playwright/test/cli.js', 'test', '--workers=4', '--retries=2')
+$testArguments = @('node_modules/@playwright/test/cli.js', 'test', ('--workers=' + $env:PLAYWRIGHT_WORKER_COUNT), ('--retries=' + $env:PLAYWRIGHT_RETRY_COUNT))
+if ($env:TEST_NAME_FILTER) { $testArguments += @('--grep', $env:TEST_NAME_FILTER) }
 
 if ($env:SELECTED_TEST_FILES) {
     foreach ($file in $env:SELECTED_TEST_FILES.Split(',')) {
@@ -179,7 +218,7 @@ exit $LASTEXITCODE
                         catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE') {
                             // Jenkins Tools must contain a managed installation named Allure.
                             allure([
-                                commandline: 'Allure',
+                                commandline: params.ALLURE_TOOL?.trim() ?: 'Allure',
                                 configPath: 'allurerc.mjs',
                                 includeProperties: false,
                                 reportBuildPolicy: 'ALWAYS',
@@ -189,18 +228,10 @@ exit $LASTEXITCODE
                         }
                     }
                 } finally {
-                    if (fileExists('allure-results')) {
-                        archiveArtifacts(
-                            artifacts: 'allure-results/**,allure-report/**,playwright-report/**,test-results/**,allure-history/history.jsonl',
-                            allowEmptyArchive: true
-                        )
-                    } else {
-                        // Preserve restored history if setup fails before tests start.
-                        archiveArtifacts(
-                            artifacts: 'allure-history/history.jsonl',
-                            allowEmptyArchive: true
-                        )
-                    }
+                    archiveArtifacts(
+                        artifacts: 'allure-results/**,allure-report/**,playwright-report/**,test-results/**,allure-history/history.jsonl',
+                        allowEmptyArchive: true
+                    )
                 }
             }
         }
