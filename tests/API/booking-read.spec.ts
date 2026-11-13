@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { endpoints } from '../../config/endpoints';
-import { createBookingData } from '../../test-data/booking.data';
+import { createBookingData } from '../../utils/booking.utils';
 
 test("Listing bookings returns booking IDs",async({request})=>{
 
@@ -79,4 +79,53 @@ test("Searching bookings with an unknown guest name returns an empty list",async
  expect(getResponseData).toEqual([]);
 
 
+})
+
+
+test("Searching bookings by first name returns the created booking",async({request})=>
+{
+  const bookingData = createBookingData();
+ const createResponse =await  request.post(endpoints.bookings,{data:bookingData});
+ expect(createResponse.status()).toBe(200);
+ const createdBooking = await createResponse.json();
+ const bookingId = createdBooking.bookingid;
+ expect(Number.isInteger(bookingId)).toBe(true);
+ expect(bookingId).toBeGreaterThan(0);
+  const getResponse =await request.get(endpoints.bookings,{
+      params:{
+        firstname:bookingData.firstname
+      }
+    }
+  );
+
+ expect(getResponse.status()).toBe(200);
+ const getResponseData=await getResponse.json();
+ expect(Array.isArray(getResponseData)).toBe(true);
+ expect(getResponseData).toContainEqual({ bookingid: bookingId });
+
+
+})
+
+
+
+test("Searching bookings by last name returns the created booking",async({request})=>
+{
+  const bookingData = createBookingData();
+ const createResponse =await  request.post(endpoints.bookings,{data:bookingData});
+ expect(createResponse.status()).toBe(200);
+ const createdBooking = await createResponse.json();
+ const bookingId = createdBooking.bookingid;
+ expect(Number.isInteger(bookingId)).toBe(true);
+ expect(bookingId).toBeGreaterThan(0);
+  const getResponse =await request.get(endpoints.bookings,{
+      params:{
+        lastname:bookingData.lastname
+      }
+    }
+  );
+
+ expect(getResponse.status()).toBe(200);
+ const getResponseData=await getResponse.json();
+ expect(Array.isArray(getResponseData)).toBe(true);
+ expect(getResponseData).toContainEqual({ bookingid: bookingId });
 })

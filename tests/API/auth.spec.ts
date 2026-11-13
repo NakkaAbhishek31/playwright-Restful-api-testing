@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { endpoints } from '../../config/endpoints';
+import { invalidCredentials } from '../../test-data/auth.data';
 
 test('Valid credentials return an authentication token', async ({ request }) => {
   const response = await request.post(endpoints.auth, {
@@ -19,10 +20,7 @@ test('Valid credentials return an authentication token', async ({ request }) => 
 
 test('Invalid credentials return an authentication failure', async ({ request }) => {
   const response = await request.post(endpoints.auth, {
-    data: {
-      username: 'invalid-user',
-      password: 'invalid-password',
-    },
+    data: invalidCredentials,
   });
 
   expect(response.status()).toBe(200);
