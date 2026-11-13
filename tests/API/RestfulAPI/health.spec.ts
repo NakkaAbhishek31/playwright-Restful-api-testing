@@ -1,5 +1,5 @@
 import{test,expect} from "@playwright/test"
-import { endpoints } from "../../config/endpoints";
+import { endpoints } from "../../../config/endpoints";
 
 test("Verify the Restful Booker API is available.",async({request})=>{
 

@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -8,6 +8,8 @@ if (existsSync(envPath)) {
 }
 
 const baseURL = process.env.BASE_URL;
+const dummyJsonBaseURL = process.env.DUMMYJSON_BASE_URL || 'https://dummyjson.com';
+const toolshopBaseURL = process.env.TOOLSHOP_BASE_URL || 'https://api.practicesoftwaretesting.com';
 if (!baseURL) {
   throw new Error('Set BASE_URL in .env or in your environment before running Playwright.');
 }
@@ -49,40 +51,28 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
 
-  /* Configure projects for major browsers */
+  // Each API suite uses its own base URL.
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'toolshop',
+      testDir: './tests/API/Toolshop',
+      use: { baseURL: toolshopBaseURL },
     },
-
-  
-    
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    {
+      name: 'restful-booker',
+      testDir: './tests/API/RestfulAPI',
+      use: { baseURL },
+    },
+    {
+      name: 'dummyjson',
+      testDir: './tests/API/DummyJSON',
+      use: { baseURL: dummyJsonBaseURL },
+    },
   ],
-
   /* Run your local dev server before starting the tests */
   // webServer: {
   //   command: 'npm run start',
   //   reuseExistingServer: !process.env.CI,
   // },
 });
+

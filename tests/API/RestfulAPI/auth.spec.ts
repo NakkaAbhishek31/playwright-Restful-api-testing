@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { endpoints } from '../../config/endpoints';
-import { invalidCredentials } from '../../test-data/auth.data';
+import { endpoints } from '../../../config/endpoints';
+import { invalidCredentials } from '../../../test-data/auth.data';
 
 test('Valid credentials return an authentication token', async ({ request }) => {
   const response = await request.post(endpoints.auth, {

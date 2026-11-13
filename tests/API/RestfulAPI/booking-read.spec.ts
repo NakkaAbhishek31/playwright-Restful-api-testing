@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { endpoints } from '../../config/endpoints';
-import { createBookingData } from '../../utils/booking.utils';
+import { endpoints } from '../../../config/endpoints';
+import { createBookingData } from '../../../utils/booking.utils';
+
 
 test("Listing bookings returns booking IDs",async({request})=>{
 

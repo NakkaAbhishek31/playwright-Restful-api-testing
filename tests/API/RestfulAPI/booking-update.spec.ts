@@ -1,9 +1,10 @@
 
 import { test, expect } from '@playwright/test';
-import { endpoints } from '../../config/endpoints';
-import { bookingTestData } from '../../test-data/booking.data';
-import { invalidToken } from '../../test-data/auth.data';
-import { createBookingData, createPartialBookingData } from '../../utils/booking.utils';
+import { endpoints } from '../../../config/endpoints';
+import { invalidToken } from '../../../test-data/auth.data';
+import { bookingTestData } from '../../../test-data/booking.data';
+import { createBookingData, createPartialBookingData } from '../../../utils/booking.utils';
+
 test("Retrieving a created booking returns matching details",async({request})=>{
   const bookingData = createBookingData();
   const updatedBookingData = { ...createBookingData(), additionalneeds: bookingTestData.updatedAdditionalneeds };

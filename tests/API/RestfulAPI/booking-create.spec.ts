@@ -1,6 +1,6 @@
 import{test,request, expect} from "@playwright/test"
-import { endpoints } from "../../config/endpoints"
-import { createBookingData } from '../../utils/booking.utils';
+import { endpoints } from "../../../config/endpoints"
+import { createBookingData } from '../../../utils/booking.utils';
 
 test("Creating a booking returns its ID and submitted detail",async({request})=>{
   const bookingData = createBookingData();

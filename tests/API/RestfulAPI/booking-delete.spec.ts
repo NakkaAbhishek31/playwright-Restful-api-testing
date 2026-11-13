@@ -1,7 +1,8 @@
-import { test, expect } from '@playwright/test';
-import { endpoints } from '../../config/endpoints';
-import { invalidToken } from '../../test-data/auth.data';
-import { createBookingData } from '../../utils/booking.utils';
+import{test,request, expect} from "@playwright/test"
+import { endpoints } from "../../../config/endpoints"
+import { invalidToken } from "../../../test-data/auth.data";
+import { createBookingData } from "../../../utils/booking.utils";
+
 test("deleting a created booking",async({request})=>{
   const bookingData = createBookingData();
   const bookingresponse = await request.post(endpoints.bookings,{data:bookingData});
